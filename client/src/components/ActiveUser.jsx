@@ -16,7 +16,9 @@ const ActiveUser = () => {
   }
   `;
 
-  const { loading, error, data } = useQuery(GET_ALL_USERS);
+  const { loading, error, data } = useQuery(GET_ALL_USERS,{
+    pollInterval:2000
+  });
   console.log(data)
   if (loading) return <h1>Loading....</h1>;
   

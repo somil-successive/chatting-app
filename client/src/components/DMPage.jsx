@@ -15,14 +15,18 @@ const navigate=useNavigate();
 
   console.log("sender is.........",sender);
 
-  // const [user, setUser] = useState(credentials.username);
-
 
   const [text, setText] = useState("");
+
   const receiverId=userId;
   const senderId=sender.id;
 
   console.log("sender id for post is.....",senderId);
+
+  const handleChange=(e)=>{
+    setText(e.target.value)
+
+  }
 
 
   const SEND_MESSAGE = gql`
@@ -55,9 +59,11 @@ const UPDATE_USER_STATUS = gql`
   }
 `;
 
-const { loading, error, data } = useQuery(GET_ALL_USERS);
+const { loading, error, data } = useQuery(GET_ALL_USERS,{
+  pollInterval:3000
+});
 
-  const [sendMessage] = useMutation(SEND_MESSAGE);
+  const [sendMessage,{ error: sendError }] = useMutation(SEND_MESSAGE);
 
   const [updateUserStatus] = useMutation(UPDATE_USER_STATUS);
 
@@ -80,7 +86,10 @@ const { loading, error, data } = useQuery(GET_ALL_USERS);
 
   const handleSend = () => {
     console.log("button start ........");
+    console.log("text is...........",text);
     if (text.length > 0) {
+
+      console.log("inside handle send if block........");
       sendMessage({
         variables: {
           text: text,
@@ -88,9 +97,13 @@ const { loading, error, data } = useQuery(GET_ALL_USERS);
           receiverId:userId
         },
       });
+
+      console.log("message sent is .........",text);
       setText("");
     }
   };
+
+  
   return (
     <>
       <Layout>
@@ -98,8 +111,8 @@ const { loading, error, data } = useQuery(GET_ALL_USERS);
             style={{
               padding: "10px",
               fontSize: "16px",
-              backgroundColor: "#4caf50",
-              color: "#ffffff",
+              backgroundColor: "red",
+              color: "white",
               border: "none",
               cursor: "pointer",
             }}
@@ -120,7 +133,7 @@ const { loading, error, data } = useQuery(GET_ALL_USERS);
               padding: "8px",
               fontSize: "16px",
             }}
-            onChange={(e) => setText(e.target.value)}
+            onChange={handleChange}
           />
           <button
             style={{

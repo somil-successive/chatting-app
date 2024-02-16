@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { mockUsers } from "../utils/mockUsers";
-import { useAuth } from "./AuthContext";
 import { gql, useMutation } from "@apollo/client";
 
 const SignUp = () => {
@@ -33,6 +31,7 @@ const SignUp = () => {
       });
     }
     alert("Registered Successfully!");
+  
   };
 
   return (

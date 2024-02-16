@@ -33,13 +33,14 @@ const Login = () => {
     }
   `;
 
-  const { loading, error, data } = useQuery(GET_ALL_USERS);
+  const { loading, error, data } = useQuery(GET_ALL_USERS,{
+    pollInterval:2000
+  });
   console.log(("user data is .....", data));
 
+  const [updateUserStatus] = useMutation(UPDATE_USER_STATUS);
 
-   const [updateUserStatus] = useMutation(UPDATE_USER_STATUS);
-
-  const handleLogin = async() => {
+  const handleLogin = async () => {
     const userFound = data?.getUsers?.find(
       (user) =>
         user.username === credentials.username &&
@@ -47,11 +48,10 @@ const Login = () => {
     );
 
     if (userFound) {
-
       await updateUserStatus({
         variables: {
           id: userFound.id,
-          status: 'online',
+          status: "online",
         },
       });
 
