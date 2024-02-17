@@ -24,14 +24,6 @@ const ActiveUser = () => {
   
   const onlineUsers = data?.getUsers?.filter(user => user.status === 'online')|| [];
 
-// const onlineUsers = data?.getUsers?.filter((user) => {
-//     const isOnline = user.status === 'online';
-  
-//     const isNotSender = sender && sender.id !== user.id;
-  
-//     return isOnline && isNotSender;
-//   }) || [];
-
 
   return (
     <>

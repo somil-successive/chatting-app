@@ -28,6 +28,8 @@ const navigate=useNavigate();
 
   }
 
+  
+
 
   const SEND_MESSAGE = gql`
     mutation ($text: String!, $senderId: ID!, $receiverId: ID!) {
@@ -84,17 +86,18 @@ const { loading, error, data } = useQuery(GET_ALL_USERS,{
 
   }
 
-  const handleSend = () => {
+  const handleSend = async() => {
     console.log("button start ........");
     console.log("text is...........",text);
     if (text.length > 0) {
 
       console.log("inside handle send if block........");
-      sendMessage({
+      await sendMessage({
         variables: {
           text: text,
           senderId: sender.id,
           receiverId:userId
+          
         },
       });
 

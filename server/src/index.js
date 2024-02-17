@@ -10,10 +10,9 @@ import { expressMiddleware } from "@apollo/server/express4";
 
 import { PubSub } from "graphql-subscriptions";
 import bodyParser from "body-parser";
-
 async function startServer() {
   const pubsub = new PubSub();
-  
+
   const app = express();
 
   const httpServer = createServer(app);
@@ -37,6 +36,7 @@ async function startServer() {
     username:String!
     password:String
     status:String!
+    
   }
 
   type Query{
@@ -53,7 +53,10 @@ async function startServer() {
 
 
   type Subscription{
+
     getMessages(senderId: ID!, receiverId: ID!):[Message!]
+    getUsers:[User!]
+    messageSent(senderId: ID!, receiverId: ID!):Message!
     }
   
   `;
@@ -98,17 +101,21 @@ async function startServer() {
 
         messages.push(newMessage);
 
-        const result = messages.filter(
-          (message) =>
-            (message.senderId === senderId &&
-              message.receiverId === receiverId) ||
-            (message.senderId === receiverId &&
-              message.receiverId === senderId)
-        );
+        
 
-    
-          const channel = `MESSAGE_CHANNEL_${senderId}_${receiverId}`;
-         pubsub.publish(channel, { getMessages:result});
+        const channel = `CHAT_CHANNEL_${senderId}_${receiverId}`;
+
+        pubsub.publish(channel, { messageSent: newMessage })
+
+        // const result = messages.filter(
+        //   (message) =>
+        //     (message.senderId === senderId &&
+        //       message.receiverId === receiverId) ||
+        //     (message.senderId === receiverId && message.receiverId === senderId)
+        // );
+
+        // const channel = `MESSAGE_CHANNEL_${senderId}_${receiverId}`;
+        // pubsub.publish(channel, { getMessages: result });
 
         return newMessage;
       },
@@ -121,6 +128,9 @@ async function startServer() {
           status,
         };
         users.push(newUser);
+
+        const userChannel = "USERS_CHANNEL";
+        pubsub.publish(userChannel, { getUsers: users });
 
         return newUser;
       },
@@ -142,7 +152,6 @@ async function startServer() {
     Subscription: {
       getMessages: {
         subscribe: (parent, { senderId, receiverId }, contextValue) => {
-
           const result = messages.filter(
             (message) =>
               (message.senderId === senderId &&
@@ -150,18 +159,31 @@ async function startServer() {
               (message.senderId === receiverId &&
                 message.receiverId === senderId)
           );
-          
-          console.log(":::::", parent, senderId, receiverId)
 
-          if (result.length > 0) {
-            return existingMessages;
-          }
+          console.log(":::::", parent, senderId, receiverId);
 
           const channel = `MESSAGE_CHANNEL_${senderId}_${receiverId}`;
 
-          return pubsub.asyncIterator([channel,result]);
+          return pubsub.asyncIterator([channel, result]);
         },
       },
+
+      getUsers: {
+        subscribe: () => {
+          const userChannel = "USERS_CHANNEL";
+          return pubsub.asyncIterator(userChannel);
+        },
+      },
+
+      messageSent: {
+        subscribe: (parent, { senderId, receiverId }) => {
+          const channel = `CHAT_CHANNEL_${senderId}_${receiverId}`;
+
+          return pubsub.asyncIterator(channel)
+        },
+      },
+
+
     },
   };
 
@@ -169,6 +191,7 @@ async function startServer() {
 
   const server = new ApolloServer({
     schema,
+    context:{pubsub},
     plugins: [
       ApolloServerPluginDrainHttpServer({ httpServer }),
       {
@@ -183,7 +206,6 @@ async function startServer() {
     ],
   });
 
-  
   app.use(cors());
 
   const wsServer = new WebSocketServer({

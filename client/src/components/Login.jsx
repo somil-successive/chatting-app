@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
-import { gql, useMutation, useQuery } from "@apollo/client";
+import { gql, useMutation, useQuery, useSubscription } from "@apollo/client";
 
 const Login = () => {
   const initialCredential = { username: "", password: "" };
   const [credentials, setCredentials] = useState(initialCredential);
 
+  const[userData,setUserData]=useState({});
   const { login } = useAuth();
 
   const navigate = useNavigate();
@@ -22,6 +23,18 @@ const Login = () => {
     }
   `;
 
+
+  // const GET_ALL_USERS = gql`
+  // subscription{
+  //   getUsers {
+  //     id
+  //     status
+  //     username
+  //     password
+  //   }
+  // }
+  // `;
+
   const UPDATE_USER_STATUS = gql`
     mutation ($id: ID!, $status: String!) {
       updateUserStatus(id: $id, status: $status) {
@@ -36,12 +49,24 @@ const Login = () => {
   const { loading, error, data } = useQuery(GET_ALL_USERS,{
     pollInterval:2000
   });
-  console.log(("user data is .....", data));
 
+  // const {data } = useSubscription(GET_ALL_USERS);
+
+  useEffect(()=>{
+    if(data){
+      setUserData(data)
+    }
+  },[data])
+
+
+  
   const [updateUserStatus] = useMutation(UPDATE_USER_STATUS);
-
+  
   const handleLogin = async () => {
-    const userFound = data?.getUsers?.find(
+
+    console.log(("user data is .....", data));
+
+    const userFound = userData?.getUsers?.find(
       (user) =>
         user.username === credentials.username &&
         user.password === credentials.password

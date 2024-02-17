@@ -6,9 +6,10 @@ const Messages = (props) => {
   // console.log("props is ..........", props);
   const { senderId, receiverId } = props;
 
-  const GET_ALL_MESSAGES = gql`
-    subscription GetMessages($senderId: ID!, $receiverId: ID!) {
-      getMessages(senderId: $senderId, receiverId: $receiverId) {
+  const MESSAGE_SENT_SUBSCRIPTION = gql`
+    subscription MessageSent($senderId: ID!, $receiverId: ID!) {
+      messageSent(senderId: $senderId, receiverId: $receiverId) {
+        id
         text
         sender {
           id
@@ -18,63 +19,146 @@ const Messages = (props) => {
     }
   `;
 
-  const { data, loading } = useSubscription(GET_ALL_MESSAGES, {
+  // const { data, loading } = useSubscription(GET_ALL_MESSAGES, {
+  //   variables: {
+  //     senderId,
+  //     receiverId,
+  //   },
+  // });
+
+  const [result, setResult] = useState({});
+
+  const { credentials, sender } = useAuth();
+
+  const GET_ALL_MESSAGES = gql`
+    query ($senderId: ID!, $receiverId: ID!) {
+      getMessages(senderId: $senderId, receiverId: $receiverId) {
+        id
+        text
+        sender {
+          id
+          username
+        }
+      }
+    }
+  `;
+
+  const { loading, error, data } = useQuery(GET_ALL_MESSAGES, {
+    variables: {
+      senderId,
+      receiverId,
+      // pollInterval:2000
+    },
+  });
+
+  const [chats, setChats] = useState(data?.getMessages || []);
+
+  useSubscription(MESSAGE_SENT_SUBSCRIPTION, {
     variables: {
       senderId,
       receiverId,
     },
+     onData:({ client, subscriptionData }) => {
+      const newMessage = subscriptionData?.data?.messageSent;
+      client.cache.updateQuery(
+        {query: GET_ALL_MESSAGES},
+        ()=>{
+          return  { data: newMessage }
+
+        }
+        
+      );
+      // setChats((prevChats) => [...prevChats, newMessage]);
+    },
   });
 
-  const [result, setResult] = useState({});
-
-
-  const { credentials, sender } = useAuth();
-
-  // const GET_ALL_MESSAGES = gql`
-  //   query ($senderId: ID!, $receiverId: ID!) {
-  //     getMessages(senderId: $senderId, receiverId: $receiverId) {
-  //       text
-  //       sender {
-  //         id
-  //         username
-  //       }
-
-  //     }
-  //   }
-  // `;
-
-  // const { data } = useQuery(GET_ALL_MESSAGES, {
+  // useSubscription(MESSAGE_SENT_SUBSCRIPTION, {
   //   variables: {
   //     senderId,
   //     receiverId,
-  //     pollInterval:2000
   //   },
-  //   // onSubscriptionData:(data)=>console.log("Message Received")
+  //   onSubscriptionData: ({ client, subscriptionData }) => {
+  //     const newMessage = subscriptionData.data.messageSent;
+  //     const existingMessages = client.readQuery({
+  //       query: GET_ALL_MESSAGES,
+  //       variables: { senderId, receiverId },
+  //     });
 
+  //     if (existingMessages) {
+  //       const updatedMessages = {
+  //         getMessages: [...existingMessages.getMessages, newMessage],
+  //       };
+
+  //       client.writeQuery({
+  //         query: GET_ALL_MESSAGES,
+  //         variables: { senderId, receiverId },
+  //         data: updatedMessages,
+  //       });
+
+  //       setChats(updatedMessages.getMessages);
+  //     }
+  //   },
   // });
 
+  // useSubscription(MESSAGE_SENT_SUBSCRIPTION, {
+  //   variables: {
+  //     senderId,
+  //     receiverId,
+  //   },
+  //   onSubscriptionData: ({ client, subscriptionData }) => {
+  //     const newMessage = subscriptionData.data.messageSent;
+
+  //     // Read the existing messages from the cache
+  //     const existingMessages = client.readQuery({
+  //       query: GET_ALL_MESSAGES,
+  //       variables: { senderId, receiverId },
+  //     });
+
+  //     if (existingMessages) {
+  //       // Check if the new message is already in the cache
+  //       const isMessageInCache = existingMessages.getMessages.some(
+  //         (message) => message.id === newMessage.id
+  //       );
+
+  //       if (!isMessageInCache) {
+  //         // Update the cache and local state with the new message
+  //         const updatedMessages = {
+  //           getMessages: [...existingMessages.getMessages, newMessage],
+  //         };
+
+  //         client.writeQuery({
+  //           query: GET_ALL_MESSAGES,
+  //           variables: { senderId, receiverId },
+  //           data: updatedMessages,
+  //         });
+
+  //         setChats(updatedMessages.getMessages);
+  //       }
+  //     }
+  //   },
+  // });
+
+  console.log("data from usequeryyyyyyy is..........", data);
+
   useEffect(() => {
-    if (data) setResult(data);
-  }, [data, senderId, receiverId]);
+    if (data) {
+      setChats(data.getMessages);
+    }
+  }, [data]);
+
+  // useEffect(() => {
+  //   if (data) setResult(data);
+  // }, [data, senderId, receiverId]);
 
   if (loading) return null;
 
-  // console.log("data from subscription is......",data?.getMessages);
   if (!data) {
     return null;
   }
 
-  // const { loading, error, data } = useQuery(GET_ALL_MESSAGES, {
-  //   variables: { senderId, receiverId },
-  // });
-
-  // console.log("datataa is .......", data);
-
-  // if (loading) return <h1>Loading....</h1>;
-
   return (
     <>
-      {result?.getMessages?.map(({ id, sender, text }) => (
+      {chats.map(({ id, sender, text }) => (
         <div
           key={id}
           style={{
