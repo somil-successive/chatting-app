@@ -5,7 +5,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const initialCredential = { username: "", password: "" };
   const [credentials, setCredentials] = useState(initialCredential);
-  const [sender,setSender]=useState();
+  const [sender,setSender]=useState({});
 
 
   

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { gql, useMutation } from "@apollo/client";
+import { SEND_USER } from "../query/UserQuery";
 
 const SignUp = () => {
   const initialCredential = { username: "", password: "", status: "offline" };
@@ -8,15 +9,15 @@ const SignUp = () => {
 
   const navigate = useNavigate();
 
-  const SEND_USER = gql`
-    mutation ($username: String!, $password: String!, $status: String!) {
-      sendUser(username: $username, password: $password, status: $status) {
-        id
-        username
-        password
-      }
-    }
-  `;
+  // const SEND_USER = gql`
+  //   mutation ($username: String!, $password: String!, $status: String!) {
+  //     sendUser(username: $username, password: $password, status: $status) {
+  //       id
+  //       username
+  //       password
+  //     }
+  //   }
+  // `;
 
   const [sendUser] = useMutation(SEND_USER);
 
@@ -31,7 +32,6 @@ const SignUp = () => {
       });
     }
     alert("Registered Successfully!");
-  
   };
 
   return (

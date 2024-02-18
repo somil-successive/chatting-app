@@ -1,76 +1,55 @@
 import { gql, useQuery, useSubscription } from "@apollo/client";
 import { useAuth } from "./AuthContext";
 import { useEffect, useState } from "react";
+import { GET_ALL_MESSAGES, MESSAGE_SENT_SUBSCRIPTION } from "../query/MsgQuery";
 
 const Messages = (props) => {
   // console.log("props is ..........", props);
   const { senderId, receiverId } = props;
 
-  const MESSAGE_SENT_SUBSCRIPTION = gql`
-    subscription MessageSent($senderId: ID!, $receiverId: ID!) {
-      messageSent(senderId: $senderId, receiverId: $receiverId) {
-        id
-        text
-        sender {
-          id
-          username
-        }
-      }
-    }
-  `;
-
-  // const { data, loading } = useSubscription(GET_ALL_MESSAGES, {
-  //   variables: {
-  //     senderId,
-  //     receiverId,
-  //   },
-  // });
-
-  const [result, setResult] = useState({});
+  const [chats, setChats] = useState([]);
+  
 
   const { credentials, sender } = useAuth();
 
-  const GET_ALL_MESSAGES = gql`
-    query ($senderId: ID!, $receiverId: ID!) {
-      getMessages(senderId: $senderId, receiverId: $receiverId) {
-        id
-        text
-        sender {
-          id
-          username
-        }
-      }
-    }
-  `;
-
-  const { loading, error, data } = useQuery(GET_ALL_MESSAGES, {
+  const { loading, error, data,refetch } = useQuery(GET_ALL_MESSAGES, {
     variables: {
       senderId,
       receiverId,
       // pollInterval:2000
     },
+    onCompleted(data){
+      setChats(data?.getMessages)
+    }
   });
 
-  const [chats, setChats] = useState(data?.getMessages || []);
+  
 
-  useSubscription(MESSAGE_SENT_SUBSCRIPTION, {
-    variables: {
-      senderId,
-      receiverId,
-    },
-     onData:({ client, subscriptionData }) => {
-      const newMessage = subscriptionData?.data?.messageSent;
-      client.cache.updateQuery(
-        {query: GET_ALL_MESSAGES},
-        ()=>{
-          return  { data: newMessage }
-
-        }
-        
-      );
-      // setChats((prevChats) => [...prevChats, newMessage]);
-    },
-  });
+//   useSubscription(MESSAGE_SENT_SUBSCRIPTION, {
+//     variables: {
+//       senderId,
+//       receiverId,
+//     },
+//      onData:({ client, subscriptionData }) => {
+//       const newMessage = subscriptionData?.data?.messageSent;
+//       client.cache.modify({
+//         fields: {
+//           getMessages: (existingMessages = []) => {
+//             // Ensure the new message is not already in the cache
+//             const isMessageInCache = existingMessages.some(
+//               (message) => message.id === newMessage.id
+//             );
+  
+//             if (!isMessageInCache) {
+//               return [...existingMessages, newMessage];
+//             }
+  
+//             return existingMessages;
+//           },
+//         },
+//       });
+//   }
+// });
 
   // useSubscription(MESSAGE_SENT_SUBSCRIPTION, {
   //   variables: {
@@ -133,18 +112,108 @@ const Messages = (props) => {
   //         });
 
   //         setChats(updatedMessages.getMessages);
+
+  //         refetch();
   //       }
   //     }
   //   },
   // });
 
+
+  useSubscription(MESSAGE_SENT_SUBSCRIPTION, {
+    variables: {
+      senderId,
+      receiverId,
+    },
+    onData: ({ client,data:subscriptionData }) => {
+
+      console.log('Subscription Datais....................:', subscriptionData);
+      const newMessage = subscriptionData?.data?.messageSent;
+  
+      // Update cache for sender
+      const senderMessages = client.readQuery({
+        query: GET_ALL_MESSAGES,
+        variables: { senderId, receiverId },
+      });
+
+
+      
+      if (senderMessages) {
+        client.writeQuery({
+          query: GET_ALL_MESSAGES,
+          variables: { senderId, receiverId },
+          data: {
+            getMessages: [...senderMessages.getMessages, newMessage],
+          },
+        });
+      }
+      
+      // Update cache for receiver
+      const receiverMessages = client.readQuery({
+        query: GET_ALL_MESSAGES,
+        variables: { senderId: receiverId, receiverId: senderId },
+      });
+      
+      console.log("receiver cache is..........",receiverMessages);
+      
+      if (receiverMessages) {
+        client.writeQuery({
+          query: GET_ALL_MESSAGES,
+          variables: { senderId: receiverId, receiverId: senderId },
+          data: {
+            getMessages: [...receiverMessages.getMessages, newMessage],
+          },
+        });
+      }
+
+
+      refetch();
+    },
+  });
+
   console.log("data from usequeryyyyyyy is..........", data);
+
+
+  // useSubscription(MESSAGE_SENT_SUBSCRIPTION, {
+  //   variables: {
+  //     senderId,
+  //     receiverId,
+  //   },
+  //   onData: ({ client, subscriptionData }) => {
+  //     const newMessage = subscriptionData?.data?.messageSent;
+  //     // client.cache.updateQuery(
+  //     //   { query: GET_ALL_MESSAGES },
+  //     //   () => {
+  //     //     return { data: newMessage };
+  //     //   }
+  //     // );
+  //     // Manually refetch the data when a new message is received
+  //     refetch();
+  //   },
+  // });
+
+
+  // const {data:subData} = useSubscription(MESSAGE_SENT_SUBSCRIPTION,{
+  //   onSubscriptionData({subscriptionData:{data}}){
+  //      if(
+  //        (data.messageSent.receiver.id == receiverId && data.messageSent.sender.id == senderId) ||
+  //        (data.messageSent.receiver.id == senderId && data.messageSent.sender.id == receiverId) 
+  //      ){
+  //         setChats((prevMessages)=>[...prevMessages,data.messageSent])  
+  //         refetch();
+          
+  //      }
+
+  //   }
+  // })
+ 
+
 
   useEffect(() => {
     if (data) {
       setChats(data.getMessages);
     }
-  }, [data]);
+  }, [data,refetch]);
 
   // useEffect(() => {
   //   if (data) setResult(data);

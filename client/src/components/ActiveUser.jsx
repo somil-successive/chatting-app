@@ -1,20 +1,10 @@
 import { gql, useQuery } from "@apollo/client";
 import { Link } from "react-router-dom";
 import { useAuth } from "./AuthContext";
+import { GET_ALL_USERS } from "../query/UserQuery";
 
 const ActiveUser = () => {
     const{sender}=useAuth();
-
-    console.log("sender in active user page......",sender)
-  const GET_ALL_USERS = gql`
-  query{
-    getUsers {
-      id
-      status
-      username
-    }
-  }
-  `;
 
   const { loading, error, data } = useQuery(GET_ALL_USERS,{
     pollInterval:2000

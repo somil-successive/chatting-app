@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { gql, useMutation, useQuery, useSubscription } from "@apollo/client";
+import { GET_ALL_USERS, UPDATE_USER_STATUS } from "../query/UserQuery";
 
 const Login = () => {
   const initialCredential = { username: "", password: "" };
@@ -12,16 +13,16 @@ const Login = () => {
 
   const navigate = useNavigate();
 
-  const GET_ALL_USERS = gql`
-    query {
-      getUsers {
-        id
-        status
-        username
-        password
-      }
-    }
-  `;
+  // const GET_ALL_USERS = gql`
+  //   query {
+  //     getUsers {
+  //       id
+  //       status
+  //       username
+  //       password
+  //     }
+  //   }
+  // `;
 
 
   // const GET_ALL_USERS = gql`
@@ -35,16 +36,16 @@ const Login = () => {
   // }
   // `;
 
-  const UPDATE_USER_STATUS = gql`
-    mutation ($id: ID!, $status: String!) {
-      updateUserStatus(id: $id, status: $status) {
-        status
-        id
-        password
-        username
-      }
-    }
-  `;
+  // const UPDATE_USER_STATUS = gql`
+  //   mutation ($id: ID!, $status: String!) {
+  //     updateUserStatus(id: $id, status: $status) {
+  //       status
+  //       id
+  //       password
+  //       username
+  //     }
+  //   }
+  // `;
 
   const { loading, error, data } = useQuery(GET_ALL_USERS,{
     pollInterval:2000
