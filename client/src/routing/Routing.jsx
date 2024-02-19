@@ -10,17 +10,16 @@ const Routing = () => {
   return (
     <>
       <AuthProvider>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<SignUp />} />
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/register" element={<SignUp />} />
 
-        <Route path="/online" element={<ActiveUser />} />
-        <Route path="/dm/:userId" element={<DMPage/>} />
-      </Routes>
+          <Route path="/online" element={<ActiveUser />} />
+          <Route path="/dm/:userId" element={<DMPage />} />
+        </Routes>
       </AuthProvider>
     </>
   );
 };
 
 export default Routing;
-

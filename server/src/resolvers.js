@@ -53,16 +53,6 @@ const resolvers = {
 
       pubsub.publish(channel, { messageSent: newMessage });
 
-      // const result = messages.filter(
-      //   (message) =>
-      //     (message.senderId === senderId &&
-      //       message.receiverId === receiverId) ||
-      //     (message.senderId === receiverId && message.receiverId === senderId)
-      // );
-
-      // const channel = `MESSAGE_CHANNEL_${senderId}_${receiverId}`;
-      // pubsub.publish(channel, { getMessages: result });
-
       return newMessage;
     },
 

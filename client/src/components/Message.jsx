@@ -5,8 +5,9 @@ import { GET_ALL_MESSAGES, MESSAGE_SENT_SUBSCRIPTION } from "../query/MsgQuery";
 
 const Messages = (props) => {
   // console.log("props is ..........", props);
-  const { senderId, receiverId } = props;
+  const {  receiverId } = props;
 
+  const senderId=sessionStorage.getItem("sender-id")
   const [chats, setChats] = useState([]);
   
 
